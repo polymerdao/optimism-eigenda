@@ -100,6 +100,7 @@ func (info *L1BlockInfo) marshalBinaryBedrock() ([]byte, error) {
 	if err := solabi.WriteEthBytes32(w, info.L1FeeScalar); err != nil {
 		return nil, err
 	}
+
 	return w.Bytes(), nil
 }
 
@@ -137,6 +138,7 @@ func (info *L1BlockInfo) unmarshalBinaryBedrock(data []byte) error {
 	if info.L1FeeScalar, err = solabi.ReadEthBytes32(reader); err != nil {
 		return err
 	}
+
 	if !solabi.EmptyReader(reader) {
 		return errors.New("too many bytes")
 	}
@@ -256,6 +258,14 @@ func L1BlockInfoFromBytes(rollupCfg *rollup.Config, l2BlockTime uint64, data []b
 		return &info, info.unmarshalBinaryEcotone(data)
 	}
 	return &info, info.unmarshalBinaryBedrock(data)
+}
+
+// This is a simple wrapper for marshalling blocks
+func L1BlockInfoToBytes(rollupCfg *rollup.Config, l2BlockTime uint64, block L1BlockInfo) ([]byte, error) {
+	if isEcotoneButNotFirstBlock(rollupCfg, l2BlockTime) {
+		return block.marshalBinaryEcotone()
+	}
+	return block.marshalBinaryBedrock()
 }
 
 // L1InfoDeposit creates a L1 Info deposit transaction based on the L1 block,
