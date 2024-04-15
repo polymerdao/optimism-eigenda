@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"errors"
 	"math/big"
 	"testing"
 
@@ -30,7 +31,7 @@ func TestL2EngineAPI(gt *testing.T) {
 	jwtPath := e2eutils.WriteDefaultJWT(t)
 	dp := e2eutils.MakeDeployParams(t, defaultRollupTestParams)
 	sd := e2eutils.Setup(t, dp, defaultAlloc)
-	log := testlog.Logger(t, log.LvlDebug)
+	log := testlog.Logger(t, log.LevelDebug)
 	genesisBlock := sd.L2Cfg.ToBlock()
 	consensus := beacon.New(ethash.NewFaker())
 	db := rawdb.NewMemoryDatabase()
@@ -94,7 +95,7 @@ func TestL2EngineAPIBlockBuilding(gt *testing.T) {
 	jwtPath := e2eutils.WriteDefaultJWT(t)
 	dp := e2eutils.MakeDeployParams(t, defaultRollupTestParams)
 	sd := e2eutils.Setup(t, dp, defaultAlloc)
-	log := testlog.Logger(t, log.LvlDebug)
+	log := testlog.Logger(t, log.LevelDebug)
 	genesisBlock := sd.L2Cfg.ToBlock()
 	db := rawdb.NewMemoryDatabase()
 	tdb := trie.NewDatabase(db, &trie.Config{HashDB: hashdb.Defaults})
@@ -154,7 +155,7 @@ func TestL2EngineAPIBlockBuilding(gt *testing.T) {
 			engine.ActL2IncludeTx(dp.Addresses.Alice)(t)
 		}
 
-		envelope, err := l2Cl.GetPayload(t.Ctx(), *fcRes.PayloadID)
+		envelope, err := l2Cl.GetPayload(t.Ctx(), eth.PayloadInfo{ID: *fcRes.PayloadID, Timestamp: uint64(nextBlockTime)})
 		payload := envelope.ExecutionPayload
 		require.NoError(t, err)
 		require.Equal(t, parent.Hash(), payload.ParentHash, "block builds on parent block")
@@ -189,15 +190,16 @@ func TestL2EngineAPIFail(gt *testing.T) {
 	jwtPath := e2eutils.WriteDefaultJWT(t)
 	dp := e2eutils.MakeDeployParams(t, defaultRollupTestParams)
 	sd := e2eutils.Setup(t, dp, defaultAlloc)
-	log := testlog.Logger(t, log.LvlDebug)
+	log := testlog.Logger(t, log.LevelDebug)
 	engine := NewL2Engine(t, log, sd.L2Cfg, sd.RollupCfg.Genesis.L1, jwtPath)
 	// mock an RPC failure
-	engine.ActL2RPCFail(t)
+	mockErr := errors.New("mock L2 RPC error")
+	engine.ActL2RPCFail(t, mockErr)
 	// check RPC failure
 	l2Cl, err := sources.NewL2Client(engine.RPCClient(), log, nil, sources.L2ClientDefaultConfig(sd.RollupCfg, false))
 	require.NoError(t, err)
 	_, err = l2Cl.InfoByLabel(t.Ctx(), eth.Unsafe)
-	require.ErrorContains(t, err, "mock")
+	require.ErrorIs(t, err, mockErr)
 	head, err := l2Cl.InfoByLabel(t.Ctx(), eth.Unsafe)
 	require.NoError(t, err)
 	require.Equal(gt, sd.L2Cfg.ToBlock().Hash(), head.Hash(), "expecting engine to start at genesis")

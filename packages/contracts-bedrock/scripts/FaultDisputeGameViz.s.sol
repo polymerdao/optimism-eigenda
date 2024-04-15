@@ -25,13 +25,7 @@ contract FaultDisputeGameViz is Script, FaultDisputeGame_Init {
 
     function setUp() public override {
         super.setUp();
-        super.init({
-            rootClaim: ROOT_CLAIM,
-            absolutePrestate: ABSOLUTE_PRESTATE,
-            l2BlockNumber: 0x10,
-            genesisBlockNumber: 0,
-            genesisOutputRoot: Hash.wrap(bytes32(0))
-        });
+        super.init({ rootClaim: ROOT_CLAIM, absolutePrestate: ABSOLUTE_PRESTATE, l2BlockNumber: 0x10 });
     }
 
     /**
@@ -49,7 +43,7 @@ contract FaultDisputeGameViz is Script, FaultDisputeGame_Init {
      * @dev Entry point
      */
     function remote(address _addr) public {
-        gameProxy = FaultDisputeGame(_addr);
+        gameProxy = FaultDisputeGame(payable(_addr));
         buildGraph();
         console.log("Saved graph to `./dispute_game.svg");
     }

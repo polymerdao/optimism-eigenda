@@ -1,6 +1,12 @@
 op-version-check:
 	go build -o ./bin/op-version-check ./cmd/op-version-check/main.go
 
+ecotone-scalar:
+	go build -o ./bin/ecotone-scalar ./cmd/ecotone-scalar/main.go
+
+receipt-reference-builder:
+	go build -o ./bin/receipt-reference-builder ./cmd/receipt-reference-builder/*.go
+
 test:
 	go test ./...
 

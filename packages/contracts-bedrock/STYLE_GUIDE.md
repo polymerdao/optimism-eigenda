@@ -115,8 +115,13 @@ All test contracts and functions should be organized and named according to the 
 These guidelines are also encoded in a script which can be run with:
 
 ```
-tsx scripts/forge-test-names.ts
+tsx scripts/checks/check-test-names.ts
 ```
+
+#### Expect Revert with Low Level Calls
+
+There is a non-intuitive behavior in foundry tests, which is documented [here](https://book.getfoundry.sh/cheatcodes/expect-revert?highlight=expectrevert#expectrevert).
+When testing for a revert on a low-level call, please use the `revertsAsExpected` pattern suggested there.
 
 _Note: This is a work in progress, not all test files are compliant with these guidelines._
 

@@ -4,21 +4,11 @@
       {
         "internalType": "GameType",
         "name": "_gameType",
-        "type": "uint8"
+        "type": "uint32"
       },
       {
         "internalType": "Claim",
         "name": "_absolutePrestate",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_genesisBlockNumber",
-        "type": "uint256"
-      },
-      {
-        "internalType": "Hash",
-        "name": "_genesisOutputRoot",
         "type": "bytes32"
       },
       {
@@ -40,10 +30,33 @@
         "internalType": "contract IBigStepper",
         "name": "_vm",
         "type": "address"
+      },
+      {
+        "internalType": "contract IDelayedWETH",
+        "name": "_weth",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IAnchorStateRegistry",
+        "name": "_anchorStateRegistry",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_l2ChainId",
+        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
+  },
+  {
+    "stateMutability": "payable",
+    "type": "fallback"
+  },
+  {
+    "stateMutability": "payable",
+    "type": "receive"
   },
   {
     "inputs": [],
@@ -176,6 +189,19 @@
   },
   {
     "inputs": [],
+    "name": "claimedBondFlag",
+    "outputs": [
+      {
+        "internalType": "uint128",
+        "name": "claimedBondFlag_",
+        "type": "uint128"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "createdAt",
     "outputs": [
       {
@@ -244,7 +270,7 @@
       {
         "internalType": "GameType",
         "name": "gameType_",
-        "type": "uint8"
+        "type": "uint32"
       },
       {
         "internalType": "Claim",
@@ -280,33 +306,7 @@
       {
         "internalType": "GameType",
         "name": "gameType_",
-        "type": "uint8"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "genesisBlockNumber",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "genesisBlockNumber_",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "genesisOutputRoot",
-    "outputs": [
-      {
-        "internalType": "Hash",
-        "name": "genesisOutputRoot_",
-        "type": "bytes32"
+        "type": "uint32"
       }
     ],
     "stateMutability": "view",
@@ -328,7 +328,7 @@
         "type": "uint256"
       }
     ],
-    "stateMutability": "pure",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -344,11 +344,11 @@
     "outputs": [
       {
         "internalType": "Hash",
-        "name": "",
+        "name": "l1Head_",
         "type": "bytes32"
       }
     ],
-    "stateMutability": "view",
+    "stateMutability": "pure",
     "type": "function"
   },
   {
@@ -362,6 +362,19 @@
       }
     ],
     "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "l2ChainId",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "l2ChainId_",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -467,6 +480,50 @@
   },
   {
     "inputs": [],
+    "name": "startingBlockNumber",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "startingBlockNumber_",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "startingOutputRoot",
+    "outputs": [
+      {
+        "internalType": "Hash",
+        "name": "root",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "l2BlockNumber",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "startingRootHash",
+    "outputs": [
+      {
+        "internalType": "Hash",
+        "name": "startingRootHash_",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "status",
     "outputs": [
       {
@@ -533,6 +590,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "weth",
+    "outputs": [
+      {
+        "internalType": "contract IDelayedWETH",
+        "name": "weth_",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {
@@ -577,6 +647,11 @@
   },
   {
     "inputs": [],
+    "name": "AnchorRootNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "BondTransferFailed",
     "type": "error"
   },
@@ -612,6 +687,11 @@
   },
   {
     "inputs": [],
+    "name": "DuplicateStep",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "GameDepthExceeded",
     "type": "error"
   },
@@ -643,6 +723,11 @@
   {
     "inputs": [],
     "name": "InvalidSplitDepth",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NoCreditToClaim",
     "type": "error"
   },
   {

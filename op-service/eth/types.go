@@ -148,11 +148,17 @@ func (b BytesMax32) String() string {
 	return hexutil.Encode(b)
 }
 
-type Uint256Quantity = uint256.Int
+type Uint256Quantity = hexutil.U256
 
 type Data = hexutil.Bytes
 
-type PayloadID = engine.PayloadID
+type (
+	PayloadID   = engine.PayloadID
+	PayloadInfo struct {
+		ID        PayloadID
+		Timestamp uint64
+	}
+)
 
 type ExecutionPayloadEnvelope struct {
 	ParentBeaconBlockRoot *common.Hash      `json:"parentBeaconBlockRoot,omitempty"`
@@ -230,7 +236,7 @@ func (envelope *ExecutionPayloadEnvelope) CheckBlockHash() (actual common.Hash, 
 		Extra:            payload.ExtraData,
 		MixDigest:        common.Hash(payload.PrevRandao),
 		Nonce:            types.BlockNonce{}, // zeroed, proof-of-work legacy
-		BaseFee:          payload.BaseFeePerGas.ToBig(),
+		BaseFee:          (*uint256.Int)(&payload.BaseFeePerGas).ToBig(),
 		ParentBeaconRoot: envelope.ParentBeaconBlockRoot,
 	}
 
@@ -269,7 +275,7 @@ func BlockAsPayload(bl *types.Block, canyonForkTime *uint64) (*ExecutionPayload,
 		GasUsed:       Uint64Quantity(bl.GasUsed()),
 		Timestamp:     Uint64Quantity(bl.Time()),
 		ExtraData:     bl.Extra(),
-		BaseFeePerGas: *baseFee,
+		BaseFeePerGas: Uint256Quantity(*baseFee),
 		BlockHash:     bl.Hash(),
 		Transactions:  opaqueTxs,
 		ExcessBlobGas: (*Uint64Quantity)(bl.ExcessBlobGas()),
@@ -283,6 +289,17 @@ func BlockAsPayload(bl *types.Block, canyonForkTime *uint64) (*ExecutionPayload,
 	return payload, nil
 }
 
+func BlockAsPayloadEnv(bl *types.Block, canyonForkTime *uint64) (*ExecutionPayloadEnvelope, error) {
+	payload, err := BlockAsPayload(bl, canyonForkTime)
+	if err != nil {
+		return nil, err
+	}
+	return &ExecutionPayloadEnvelope{
+		ExecutionPayload:      payload,
+		ParentBeaconBlockRoot: bl.BeaconRoot(),
+	}, nil
+}
+
 type PayloadAttributes struct {
 	// value for the timestamp field of the new payload
 	Timestamp Uint64Quantity `json:"timestamp"`
@@ -292,14 +309,17 @@ type PayloadAttributes struct {
 	SuggestedFeeRecipient common.Address `json:"suggestedFeeRecipient"`
 	// Withdrawals to include into the block -- should be nil or empty depending on Shanghai enablement
 	Withdrawals *types.Withdrawals `json:"withdrawals,omitempty"`
+	// parentBeaconBlockRoot optional extension in Dencun
+	ParentBeaconBlockRoot *common.Hash `json:"parentBeaconBlockRoot,omitempty"`
+
+	// Optimism additions
+
 	// Transactions to force into the block (always at the start of the transactions list).
 	Transactions []Data `json:"transactions,omitempty"`
 	// NoTxPool to disable adding any transactions from the transaction-pool.
 	NoTxPool bool `json:"noTxPool,omitempty"`
 	// GasLimit override
 	GasLimit *Uint64Quantity `json:"gasLimit,omitempty"`
-	// parentBeaconBlockRoot optional extension in Dencun
-	ParentBeaconBlockRoot *common.Hash `json:"parentBeaconBlockRoot,omitempty"`
 }
 
 type ExecutePayloadStatus string
@@ -454,3 +474,17 @@ func (v *Uint64String) UnmarshalText(b []byte) error {
 	*v = Uint64String(n)
 	return nil
 }
+
+type EngineAPIMethod string
+
+const (
+	FCUV1 EngineAPIMethod = "engine_forkchoiceUpdatedV1"
+	FCUV2 EngineAPIMethod = "engine_forkchoiceUpdatedV2"
+	FCUV3 EngineAPIMethod = "engine_forkchoiceUpdatedV3"
+
+	NewPayloadV2 EngineAPIMethod = "engine_newPayloadV2"
+	NewPayloadV3 EngineAPIMethod = "engine_newPayloadV3"
+
+	GetPayloadV2 EngineAPIMethod = "engine_getPayloadV2"
+	GetPayloadV3 EngineAPIMethod = "engine_getPayloadV3"
+)

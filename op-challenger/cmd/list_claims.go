@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum-optimism/optimism/op-service/dial"
 	oplog "github.com/ethereum-optimism/optimism/op-service/log"
 	"github.com/ethereum-optimism/optimism/op-service/sources/batching"
+	"github.com/ethereum-optimism/optimism/op-service/sources/batching/rpcblock"
 	"github.com/urfave/cli/v2"
 )
 
@@ -17,7 +18,7 @@ var (
 	GameAddressFlag = &cli.StringFlag{
 		Name:    "game-address",
 		Usage:   "Address of the fault game contract.",
-		EnvVars: opservice.PrefixEnvVar("OP_CHALLENGER", "GAME_FACTORY_ADDRESS"),
+		EnvVars: opservice.PrefixEnvVar(flags.EnvVarPrefix, "GAME_ADDRESS"),
 	}
 )
 
@@ -67,7 +68,7 @@ func listClaims(ctx context.Context, game *contracts.FaultDisputeGameContract) e
 		return fmt.Errorf("failed to retrieve status: %w", err)
 	}
 
-	claims, err := game.GetAllClaims(ctx)
+	claims, err := game.GetAllClaims(ctx, rpcblock.Latest)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve claims: %w", err)
 	}
@@ -83,13 +84,13 @@ func listClaims(ctx context.Context, game *contracts.FaultDisputeGameContract) e
 	return nil
 }
 
-var listClaimsFlags = []cli.Flag{
-	flags.L1EthRpcFlag,
-	GameAddressFlag,
-}
-
-func init() {
-	listClaimsFlags = append(listClaimsFlags, oplog.CLIFlags("OP_CHALLENGER")...)
+func listClaimsFlags() []cli.Flag {
+	cliFlags := []cli.Flag{
+		flags.L1EthRpcFlag,
+		GameAddressFlag,
+	}
+	cliFlags = append(cliFlags, oplog.CLIFlags("OP_CHALLENGER")...)
+	return cliFlags
 }
 
 var ListClaimsCommand = &cli.Command{
@@ -97,6 +98,6 @@ var ListClaimsCommand = &cli.Command{
 	Usage:       "List the claims in a dispute game",
 	Description: "Lists the claims in a dispute game",
 	Action:      ListClaims,
-	Flags:       listClaimsFlags,
+	Flags:       listClaimsFlags(),
 	Hidden:      true,
 }

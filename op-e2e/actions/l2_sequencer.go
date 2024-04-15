@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/ethereum-optimism/optimism/op-node/node/safedb"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/stretchr/testify/require"
 
@@ -30,18 +31,6 @@ func (m *MockL1OriginSelector) FindL1Origin(ctx context.Context, l2Head eth.L2Bl
 	return m.actual.FindL1Origin(ctx, l2Head)
 }
 
-// emptyL1BlobsFetcher is a no-op blobs provider. The actions test batcher currently only supports using calldata.
-type emptyL1BlobsFetcher struct {
-	t Testing
-}
-
-var _ derive.L1BlobsFetcher = &emptyL1BlobsFetcher{}
-
-func (e *emptyL1BlobsFetcher) GetBlobs(ctx context.Context, ref eth.L1BlockRef, hashes []eth.IndexedBlobHash) ([]*eth.Blob, error) {
-	e.t.Fatal("actions test do not support blobs")
-	return nil, nil
-}
-
 // L2Sequencer is an actor that functions like a rollup node,
 // without the full P2P/API/Node stack, but just the derivation state, and simplified driver with sequencing ability.
 type L2Sequencer struct {
@@ -54,9 +43,9 @@ type L2Sequencer struct {
 	mockL1OriginSelector *MockL1OriginSelector
 }
 
-func NewL2Sequencer(t Testing, log log.Logger, l1 derive.L1Fetcher, eng L2API, cfg *rollup.Config, seqConfDepth uint64) *L2Sequencer {
-	mockBlobFetcher := &emptyL1BlobsFetcher{t: t}
-	ver := NewL2Verifier(t, log, l1, mockBlobFetcher, eng, cfg, &sync.Config{})
+func NewL2Sequencer(t Testing, log log.Logger, l1 derive.L1Fetcher, blobSrc derive.L1BlobsFetcher,
+	plasmaSrc derive.PlasmaInputFetcher, eng L2API, cfg *rollup.Config, seqConfDepth uint64) *L2Sequencer {
+	ver := NewL2Verifier(t, log, l1, blobSrc, plasmaSrc, eng, cfg, &sync.Config{}, safedb.Disabled)
 	attrBuilder := derive.NewFetchingAttributesBuilder(cfg, l1, eng)
 	seqConfDepthL1 := driver.NewConfDepth(seqConfDepth, ver.l1State.L1Head, l1)
 	l1OriginSelector := &MockL1OriginSelector{

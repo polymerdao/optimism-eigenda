@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"time"
 
@@ -58,6 +59,8 @@ type DefaultFlagValues struct {
 	SafeAbortNonceTooLowCount uint64
 	FeeLimitMultiplier        uint64
 	FeeLimitThresholdGwei     float64
+	MinTipCapGwei             float64
+	MinBaseFeeGwei            float64
 	ResubmissionTimeout       time.Duration
 	NetworkTimeout            time.Duration
 	TxSendTimeout             time.Duration
@@ -71,6 +74,8 @@ var (
 		SafeAbortNonceTooLowCount: uint64(3),
 		FeeLimitMultiplier:        uint64(5),
 		FeeLimitThresholdGwei:     100.0,
+		MinTipCapGwei:             1.0,
+		MinBaseFeeGwei:            1.0,
 		ResubmissionTimeout:       48 * time.Second,
 		NetworkTimeout:            10 * time.Second,
 		TxSendTimeout:             0 * time.Second,
@@ -82,6 +87,8 @@ var (
 		SafeAbortNonceTooLowCount: uint64(3),
 		FeeLimitMultiplier:        uint64(5),
 		FeeLimitThresholdGwei:     100.0,
+		MinTipCapGwei:             1.0,
+		MinBaseFeeGwei:            1.0,
 		ResubmissionTimeout:       24 * time.Second,
 		NetworkTimeout:            10 * time.Second,
 		TxSendTimeout:             2 * time.Minute,
@@ -139,14 +146,16 @@ func CLIFlagsWithDefaults(envPrefix string, defaults DefaultFlagValues) []cli.Fl
 			EnvVars: prefixEnvVars("TXMGR_FEE_LIMIT_THRESHOLD"),
 		},
 		&cli.Float64Flag{
-			Name:    MinBaseFeeFlagName,
-			Usage:   "Enforces a minimum base fee (in GWei) to assume when determining tx fees. Off by default.",
-			EnvVars: prefixEnvVars("TXMGR_MIN_BASEFEE"),
+			Name:    MinTipCapFlagName,
+			Usage:   "Enforces a minimum tip cap (in GWei) to use when determining tx fees. 1 GWei by default.",
+			Value:   defaults.MinTipCapGwei,
+			EnvVars: prefixEnvVars("TXMGR_MIN_TIP_CAP"),
 		},
 		&cli.Float64Flag{
-			Name:    MinTipCapFlagName,
-			Usage:   "Enforces a minimum tip cap (in GWei) to use when determining tx fees. Off by default.",
-			EnvVars: prefixEnvVars("TXMGR_MIN_TIP_CAP"),
+			Name:    MinBaseFeeFlagName,
+			Usage:   "Enforces a minimum base fee (in GWei) to assume when determining tx fees. 1 GWei by default.",
+			Value:   defaults.MinBaseFeeGwei,
+			EnvVars: prefixEnvVars("TXMGR_MIN_BASEFEE"),
 		},
 		&cli.DurationFlag{
 			Name:    ResubmissionTimeoutFlagName,
@@ -209,6 +218,8 @@ func NewCLIConfig(l1RPCURL string, defaults DefaultFlagValues) CLIConfig {
 		SafeAbortNonceTooLowCount: defaults.SafeAbortNonceTooLowCount,
 		FeeLimitMultiplier:        defaults.FeeLimitMultiplier,
 		FeeLimitThresholdGwei:     defaults.FeeLimitThresholdGwei,
+		MinTipCapGwei:             defaults.MinTipCapGwei,
+		MinBaseFeeGwei:            defaults.MinBaseFeeGwei,
 		ResubmissionTimeout:       defaults.ResubmissionTimeout,
 		NetworkTimeout:            defaults.NetworkTimeout,
 		TxSendTimeout:             defaults.TxSendTimeout,
@@ -397,6 +408,13 @@ type Config struct {
 	// Signer is used to sign transactions when the gas price is increased.
 	Signer opcrypto.SignerFn
 	From   common.Address
+}
+
+func SafeConvertUInt64ToUInt32(val uint64) (uint32, bool) {
+	if val <= math.MaxUint32 {
+		return uint32(val), true
+	}
+	return 0, false
 }
 
 func (m Config) Check() error {

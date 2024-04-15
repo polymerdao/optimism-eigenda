@@ -39,3 +39,9 @@ error NotInitialized();
 
 /// @notice Thrown when the caller of a function is not an EOA.
 error NotEOA();
+
+/// @notice Thrown when an insufficient bond is provided for a large preimage proposal.
+error InsufficientBond();
+
+/// @notice Thrown when a bond transfer fails.
+error BondTransferFailed();

@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum-optimism/optimism/op-chain-ops/genesis"
 	"github.com/ethereum-optimism/optimism/op-chain-ops/safe"
 	"github.com/ethereum-optimism/optimism/op-chain-ops/upgrades"
+	oplog "github.com/ethereum-optimism/optimism/op-service/log"
 
 	"github.com/ethereum-optimism/superchain-registry/superchain"
 )
@@ -22,6 +23,37 @@ import (
 // Note that the key is the L2 chain id. This is because the L1 contracts must be specific
 // for a particular OP Stack chain and cannot currently be used by multiple chains.
 var deployments = map[uint64]superchain.ImplementationList{
+	// OP Mainnet
+	10: {
+		L1CrossDomainMessenger: superchain.VersionedContract{
+			Version: "2.3.0",
+			Address: superchain.HexToAddress("0xD3494713A5cfaD3F5359379DfA074E2Ac8C6Fd65"),
+		},
+		L1ERC721Bridge: superchain.VersionedContract{
+			Version: "2.1.0",
+			Address: superchain.HexToAddress("0xAE2AF01232a6c4a4d3012C5eC5b1b35059caF10d"),
+		},
+		L1StandardBridge: superchain.VersionedContract{
+			Version: "2.1.0",
+			Address: superchain.HexToAddress("0x64B5a5Ed26DCb17370Ff4d33a8D503f0fbD06CfF"),
+		},
+		OptimismPortal: superchain.VersionedContract{
+			Version: "2.5.0",
+			Address: superchain.HexToAddress("0x2D778797049FE9259d947D1ED8e5442226dFB589"),
+		},
+		SystemConfig: superchain.VersionedContract{
+			Version: "1.12.0",
+			Address: superchain.HexToAddress("0xba2492e52F45651B60B8B38d4Ea5E2390C64Ffb1"),
+		},
+		L2OutputOracle: superchain.VersionedContract{
+			Version: "1.8.0",
+			Address: superchain.HexToAddress("0xF243BEd163251380e78068d317ae10f26042B292"),
+		},
+		OptimismMintableERC20Factory: superchain.VersionedContract{
+			Version: "1.9.0",
+			Address: superchain.HexToAddress("0xE01efbeb1089D1d1dB9c6c8b135C934C0734c846"),
+		},
+	},
 	// OP Sepolia
 	11155420: {
 		L1CrossDomainMessenger: superchain.VersionedContract{
@@ -56,7 +88,8 @@ var deployments = map[uint64]superchain.ImplementationList{
 }
 
 func main() {
-	log.Root().SetHandler(log.StreamHandler(os.Stderr, log.TerminalFormat(isatty.IsTerminal(os.Stderr.Fd()))))
+	color := isatty.IsTerminal(os.Stderr.Fd())
+	oplog.SetGlobalLogHandler(log.NewTerminalHandler(os.Stderr, color))
 
 	app := &cli.App{
 		Name:  "op-upgrade",

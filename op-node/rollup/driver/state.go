@@ -22,6 +22,11 @@ import (
 	"github.com/ethereum-optimism/optimism/op-service/retry"
 )
 
+var (
+	ErrSequencerAlreadyStarted = errors.New("sequencer already running")
+	ErrSequencerAlreadyStopped = errors.New("sequencer not running")
+)
+
 // Deprecated: use eth.SyncStatus instead.
 type SyncStatus = eth.SyncStatus
 
@@ -343,7 +348,7 @@ func (s *Driver) eventLoop() {
 				if err := s.engineController.InsertUnsafePayload(s.driverCtx, envelope, ref); err != nil {
 					s.log.Warn("Failed to insert unsafe payload for EL sync", "id", envelope.ExecutionPayload.ID(), "err", err)
 				}
-				s.logSyncProgress("unsafe payload from sequencer")
+				s.logSyncProgress("unsafe payload from sequencer while in EL sync")
 			}
 		case newL1Head := <-s.l1HeadSig:
 			s.l1State.HandleNewL1HeadBlock(newL1Head)
@@ -412,7 +417,7 @@ func (s *Driver) eventLoop() {
 		case resp := <-s.startSequencer:
 			unsafeHead := s.engineController.UnsafeL2Head().Hash
 			if !s.driverConfig.SequencerStopped {
-				resp.err <- errors.New("sequencer already running")
+				resp.err <- ErrSequencerAlreadyStarted
 			} else if !bytes.Equal(unsafeHead[:], resp.hash[:]) {
 				resp.err <- fmt.Errorf("block hash does not match: head %s, received %s", unsafeHead.String(), resp.hash.String())
 			} else {
@@ -427,7 +432,7 @@ func (s *Driver) eventLoop() {
 			}
 		case respCh := <-s.stopSequencer:
 			if s.driverConfig.SequencerStopped {
-				respCh <- hashAndError{err: errors.New("sequencer not running")}
+				respCh <- hashAndError{err: ErrSequencerAlreadyStopped}
 			} else {
 				if err := s.sequencerNotifs.SequencerStopped(); err != nil {
 					respCh <- hashAndError{err: fmt.Errorf("sequencer start notification: %w", err)}

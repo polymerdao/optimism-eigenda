@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.0;
 
 import { IInitializable } from "src/dispute/interfaces/IInitializable.sol";
 
@@ -15,6 +15,10 @@ interface IDisputeGame is IInitializable {
     /// @notice Returns the timestamp that the DisputeGame contract was created at.
     /// @return createdAt_ The timestamp that the DisputeGame contract was created at.
     function createdAt() external view returns (Timestamp createdAt_);
+
+    /// @notice Returns the timestamp that the DisputeGame contract was resolved at.
+    /// @return resolvedAt_ The timestamp that the DisputeGame contract was resolved at.
+    function resolvedAt() external view returns (Timestamp resolvedAt_);
 
     /// @notice Returns the current status of the game.
     /// @return status_ The current status of the game.

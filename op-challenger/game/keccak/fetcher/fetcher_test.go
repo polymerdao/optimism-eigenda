@@ -9,7 +9,7 @@ import (
 
 	"github.com/ethereum-optimism/optimism/op-challenger/game/fault/contracts"
 	keccakTypes "github.com/ethereum-optimism/optimism/op-challenger/game/keccak/types"
-	"github.com/ethereum-optimism/optimism/op-service/sources/batching"
+	"github.com/ethereum-optimism/optimism/op-service/sources/batching/rpcblock"
 	"github.com/ethereum-optimism/optimism/op-service/testlog"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -174,7 +174,7 @@ func setupFetcherTest(t *testing.T) (*InputFetcher, *stubOracle, *stubL1Source) 
 		txs:        make(map[uint64]types.Transactions),
 		rcptStatus: make(map[common.Hash]uint64),
 	}
-	fetcher := NewPreimageFetcher(testlog.Logger(t, log.LvlTrace), l1Source)
+	fetcher := NewPreimageFetcher(testlog.Logger(t, log.LevelTrace), l1Source)
 	return fetcher, oracle, l1Source
 }
 
@@ -188,7 +188,7 @@ func (o *stubOracle) Addr() common.Address {
 	return oracleAddr
 }
 
-func (o *stubOracle) GetInputDataBlocks(_ context.Context, _ batching.Block, _ keccakTypes.LargePreimageIdent) ([]uint64, error) {
+func (o *stubOracle) GetInputDataBlocks(_ context.Context, _ rpcblock.Block, _ keccakTypes.LargePreimageIdent) ([]uint64, error) {
 	return o.leafBlocks, nil
 }
 
