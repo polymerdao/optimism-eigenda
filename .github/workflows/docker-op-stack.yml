@@ -28,9 +28,9 @@ jobs:
           flavor: |
             latest=false
           labels: |
-            org.opencontainers.image.source=https://github.com/polymerdao/optimism-dev
+            org.opencontainers.image.source=https://github.com/polymerdao/optimism-eigenda
             org.opencontainers.image.title=polymer
-            org.opencontainers.image.url=https://github.com/polymerdao/optimism-dev
+            org.opencontainers.image.url=https://github.com/polymerdao/optimism-eigenda
 
       - name: Authenticate Docker
         uses: docker/login-action@v2
