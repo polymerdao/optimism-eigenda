@@ -94,11 +94,10 @@ func (m *EigenDA) DisperseBlob(ctx context.Context, txData []byte) (*disperser.B
 		})
 		if err != nil {
 			m.Log.Warn("Unable to retrieve blob dispersal status, will retry", "requestID", base64RequestID, "err", err)
-		} else if statusRes.Status == disperser.BlobStatus_CONFIRMED || statusRes.Status == disperser.BlobStatus_FINALIZED {
-			// TODO(eigenlayer): As long as fault proofs are disabled, we can move on once a blob is confirmed
-			// but not yet finalized, without further logic. Once fault proofs are enabled, we will need to update
-			// the proposer to wait until the blob associated with an L2 block has been finalized, i.e. the EigenDA
-			// contracts on Ethereum have confirmed the full availability of the blob on EigenDA.
+		} else if statusRes.Status == disperser.BlobStatus_CONFIRMED {
+			m.Log.Info("EigenDA blob confirmed, waiting for finalization", "requestID", base64RequestID)
+		} else if statusRes.Status == disperser.BlobStatus_FINALIZED {
+			// Happy path
 			batchHeaderHashHex := fmt.Sprintf("0x%s", hex.EncodeToString(statusRes.Info.BlobVerificationProof.BatchMetadata.BatchHeaderHash))
 			m.Log.Info("Successfully dispersed blob to EigenDA", "requestID", base64RequestID, "batchHeaderHash", batchHeaderHashHex)
 			return statusRes.Info, nil
